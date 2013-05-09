@@ -5,3 +5,4 @@ Britain is a country.
 If America takes land from Britain, then America harms Britain.
 If America harms Britain, then Britain harms America.
 If the cat jumps over the dog, then the moon is shining.
+The dog runs.

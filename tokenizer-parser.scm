@@ -181,7 +181,7 @@
       (lambda (word)
 	(let ((parsed ((match:->combinators (match-pattern word)) tokens '() (lambda (dict) dict))))
 	  (if parsed
-	      (exit parsed))))
+	      (exit (cons (list 'class-word word) parsed)))))
       word-class)
      #f)))
 
@@ -190,36 +190,78 @@
    (syn:is-a? tokens)
    (syn:if-then? tokens)))
 
-(define (syn:low-priority tokens match)
+(define (syn:medium-priority? tokens)
+  (if (not (syn:high-priority? tokens))
+      (or
+       (syn:take? tokens)
+       (syn:take-from? tokens)
+       (syn:harm? tokens))
+      #f))
+
+(define (syn:medium-priority tokens match)
   (if (not (syn:high-priority? tokens))
       match
       #f))
 
+(define (syn:low-priority? tokens)
+  (if (not (syn:medium-priority? tokens))
+      (or
+       (syn:generic-action? tokens)
+       )
+      #f))
+
+(define (syn:low-priority tokens match)
+  (if (not 
+       (or
+	(syn:high-priority? tokens)
+	(syn:medium-priority? tokens)))
+      match
+      #f))
+
+(define (syn:floor-priority tokens match)
+  (if (not
+       (or
+	(syn:high-priority? tokens)
+	(syn:medium-priority? tokens)
+	(syn:low-priority? tokens)))
+      match
+      #f))
+
 (define (syn:is-a? tokens)
-  (syn:single-match tokens '((?? start) "is" (?? end))))
+  (syn:single-match tokens '((?? object) "is" (?? property))))
 
 (define (syn:article? tokens)
-  (syn:low-priority
+  (syn:floor-priority
    tokens
-   (syn:class-match tokens (get-full-word-class 'article) (lambda (word) `(,word (?? a))))))
+   (syn:class-match tokens (get-full-word-class 'article) (lambda (word) `(,word (?? object))))))
 
 (define (syn:if-then? tokens)
   (syn:single-match tokens '("if" (?? predicate) "then" (?? consequent))))
 
 (define (syn:take? tokens)
-  (syn:low-priority
+  (syn:medium-priority
    tokens
    (syn:class-match tokens (get-word-subclass 'action 'take) (lambda (word) `((?? taker) ,word (?? object))))))
 
 (define (syn:take-from? tokens)
-  (syn:low-priority
+  (syn:medium-priority
    tokens
    (syn:class-match tokens (get-word-subclass 'action 'take) (lambda (word) `((?? taker) ,word (?? object) "from" (?? takee))))))
 
 (define (syn:harm? tokens)
-  (syn:low-priority
+  (syn:medium-priority
    tokens
    (syn:class-match tokens (get-word-subclass 'action 'harm) (lambda (word) `((?? agressor) ,word (?? victim))))))
+
+(define (syn:generic-action? tokens)
+  (syn:low-priority
+   tokens
+   (syn:class-match tokens (get-full-word-class 'action) (lambda (word) `((?? actor) ,word (?? else))))))
+
+(define (syn:path? tokens)
+  (syn:medium-priority
+   tokens
+   (syn:class-match tokens (get-full-word-class 'path) (lambda (word) `(,word (?? else))))))
 
 ;; handler for parsing language
 
@@ -229,7 +271,8 @@
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:is-a? tokens)))
-      `(IS-A ,(parse:tokens (cadr (assq 'start parsed))) ,(parse:tokens (cadr (assq 'end parsed))))))
+      `(IS-A ,(parse:tokens (cadr (assq 'object parsed)))
+	     ,(parse:tokens (cadr (assq 'property parsed))))))
   syn:is-a?)
 
 (defhandler parse:tokens
@@ -240,22 +283,23 @@
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:if-then? tokens)))
-      `(IF ,(parse:tokens (cadr (assq 'predicate parsed))) THEN ,(parse:tokens (cadr (assq 'consequent parsed))))))
+      `(IF-THEN ,(parse:tokens (cadr (assq 'predicate parsed)))
+		,(parse:tokens (cadr (assq 'consequent parsed))))))
   syn:if-then?)
 
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:take? tokens)))
-      `(TAKE ,(parse:tokens (cadr (assq 'taker parsed))) ,(parse:tokens (cadr (assq 'object parsed))))))
+      `(TAKE ,(parse:tokens (cadr (assq 'taker parsed)))
+	     ,(parse:tokens (cadr (assq 'object parsed))))))
   syn:take?)
 
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:take-from? tokens)))
-      `(TAKE ,(parse:tokens (cadr (assq 'taker parsed)))
-	     ,(parse:tokens (cadr (assq 'object parsed)))
-	     FROM
-	     ,(parse:tokens (cadr (assq 'takee parsed))))))
+      `(TAKE-FROM ,(parse:tokens (cadr (assq 'taker parsed)))
+		  ,(parse:tokens (cadr (assq 'object parsed)))
+		  ,(parse:tokens (cadr (assq 'takee parsed))))))
   syn:take-from?)
 
 (defhandler parse:tokens
@@ -265,16 +309,34 @@
 	      ,(parse:tokens (cadr (assq 'victim parsed))))))
   syn:harm?)
 
+(defhandler parse:tokens
+  (lambda (tokens)
+    (let ((parsed (syn:generic-action? tokens)))
+      `(ACTION ,(parse:tokens (cadr (assq 'class-word parsed)))
+	       ,(parse:tokens (cadr (assq 'actor parsed)))
+	       ,(parse:tokens (cadr (assq 'else parsed))))))
+  syn:generic-action?)
+
+(defhandler parse:tokens
+  (lambda (tokens)
+    (let ((parsed (syn:path? tokens)))
+      `(PATH ,(parse:tokens (cadr (assq 'class-word parsed)))
+	     ,(parse:tokens (cadr (assq 'else parsed))))))
+  syn:path?)
+
 ;; dictionary
 
 (create-word-class! 'article)
 (add-words-to-class! 'article "a" "an" "the")
 
 (create-word-class! 'action)
-(add-words-to-class! 'action "jump")
+(add-words-to-class! 'action "jump" "jumps" "runs")
+
+(create-word-class! 'path)
+(add-words-to-class! 'path "over" "under" "through" "past" "by")
 
 (create-word-subclass! 'action 'take)
 (add-words-to-subclass! 'action 'take "take" "takes" "annex" "annexed")
 
 (create-word-subclass! 'action 'harm)
-(add-words-to-subclass! 'action 'harm "hit" "hurt" "kill" "attack")
+(add-words-to-subclass! 'action 'harm "hit" "hurt" "kill" "attack" "harm" "harms")

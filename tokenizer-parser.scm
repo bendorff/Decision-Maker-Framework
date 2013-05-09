@@ -36,7 +36,7 @@
 
 (define (tokenize filename)
   (define split-charset (char-set #\space))
-  (define punc-charset (char-set #\! #\" #\# #\$ #\% #\& #\' #\( #\) #\* #\+ #\, #\- #\. #\/ #\: #\; #\< #\= #\> #\? #\@ #\[ #\\ #\] #\^ #\_ #\` #\{ #\| #\} #\~)) 
+  (define punc-charset (char-set #\! #\# #\$ #\% #\& #\( #\) #\* #\+ #\, #\- #\. #\/ #\: #\; #\< #\= #\> #\? #\@ #\[ #\\ #\] #\^ #\_ #\` #\{ #\| #\} #\~)) 
   (define (split line)
     (let split-lp ((buffer "")
 		   (rem-line line)
@@ -188,7 +188,11 @@
 (define (syn:high-priority? tokens)
   (or
    (syn:is-a? tokens)
-   (syn:if-then? tokens)))
+   (syn:if-then? tokens)
+   (syn:query? tokens)))
+   
+(define (syn:high-priority tokens match)
+  match)
 
 (define (syn:medium-priority? tokens)
   (if (not (syn:high-priority? tokens))
@@ -228,7 +232,12 @@
       #f))
 
 (define (syn:is-a? tokens)
-  (syn:single-match tokens '((?? object) "is" (?? property))))
+	(let ((parsed (syn:single-match tokens '((?? object) "is" (?? property)))))
+	(if parsed
+	 (if (= (length (cadr (assq 'object parsed))) 0)
+		#f
+		parsed)
+	 #f)))
 
 (define (syn:article? tokens)
   (syn:floor-priority
@@ -251,7 +260,7 @@
 (define (syn:harm? tokens)
   (syn:medium-priority
    tokens
-   (syn:class-match tokens (get-word-subclass 'action 'harm) (lambda (word) `((?? agressor) ,word (?? victim))))))
+   (syn:class-match tokens (get-word-subclass 'action 'harm) (lambda (word) `((?? aggressor) ,word (?? victim))))))
 
 (define (syn:generic-action? tokens)
   (syn:low-priority
@@ -262,6 +271,11 @@
   (syn:medium-priority
    tokens
    (syn:class-match tokens (get-full-word-class 'path) (lambda (word) `(,word (?? else))))))
+   
+(define (syn:query? tokens)
+  (syn:high-priority
+    tokens
+    (syn:class-match tokens (get-full-word-class 'query) (lambda (word) `(,word (?? query-body))))))
 
 ;; handler for parsing language
 
@@ -326,7 +340,7 @@
     (let ((parsed (syn:harm? tokens)))
       `(HARMS 
 	,(list
-	  (parse:create-assoc 'agressor parsed)
+	  (parse:create-assoc 'aggressor parsed)
 	  (parse:create-assoc 'victim parsed)))))
   syn:harm?)
 
@@ -348,6 +362,15 @@
 	  (parse:create-assoc 'class-word parsed 'path)
 	  (parse:create-assoc 'else parsed)))))
   syn:path?)
+  
+(defhandler parse:tokens
+  (lambda (tokens)
+    (let ((parsed (syn:query? tokens)))
+      `(QUERY 
+	,(list
+	  (parse:create-assoc 'class-word parsed 'query)
+	  (parse:create-assoc 'query-body parsed)))))
+  syn:query?)
 
 ;; dictionary
 
@@ -358,10 +381,23 @@
 (add-words-to-class! 'action "jump" "jumps" "runs")
 
 (create-word-class! 'path)
-(add-words-to-class! 'path "over" "under" "through" "past" "by")
+(add-words-to-class! 'path "over" "under" "through" "past" "by" "to" "above")
+
+(create-word-class! 'justification)
+(add-words-to-class! 'justification "justify" "justifies" "justified"
+								   "allow" "allows" "allowed"
+								   "permit" "permits" "permitted")
+								   
+(create-word-class! 'query)
+(add-words-to-class! 'query "what" "why" "when" "who" "how")
 
 (create-word-subclass! 'action 'take)
-(add-words-to-subclass! 'action 'take "take" "takes" "annex" "annexed")
+(add-words-to-subclass! 'action 'take "take" "takes" "took" 
+									  "annex" "annexed")
 
 (create-word-subclass! 'action 'harm)
-(add-words-to-subclass! 'action 'harm "hit" "hurt" "kill" "attack" "harm" "harms")
+(add-words-to-subclass! 'action 'harm "hit" "hits" "hurt" "hurts" 
+									  "kill" "kills" "killed" 
+									  "attack" "attacks" "attacked" 
+									  "harm" "harms" "harmed"
+									  "fight" "fights" "fought")

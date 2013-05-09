@@ -82,7 +82,7 @@
     (cond ((null? wlist) class)
 	  ((null? (cdr wlist)) (error "Malformed wlist"))
 	  (else
-	   (add-word-to-class! class (car wlist) #t)
+	   (add-words-to-class! class (car wlist) #t)
 	   (loop (cdr wlist))))))
 
 (define (add-words-to-class! class . words)
@@ -265,14 +265,27 @@
 
 ;; handler for parsing language
 
+(define (parse:create-assoc property parsed #!optional tag)
+  (let ((result (parse:tokens (cadr (assq property parsed)))))
+    (if (default-object? tag)
+	(let ((tag property))
+	  (if (string? result)
+	      (cons tag (list result))
+	      (cons tag result)))
+	(if (string? result)
+	    (cons tag (list result))
+	    (cons tag result)))))
+	    
 (define parse:tokens
   (make-generic-operator 1 'nop (lambda (tokens) tokens)))
 
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:is-a? tokens)))
-      `(IS-A ,(parse:tokens (cadr (assq 'object parsed)))
-	     ,(parse:tokens (cadr (assq 'property parsed))))))
+      `(IS-A
+	,(list
+	  (parse:create-assoc 'object parsed)
+	  (parse:create-assoc 'property parsed)))))
   syn:is-a?)
 
 (defhandler parse:tokens
@@ -283,45 +296,57 @@
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:if-then? tokens)))
-      `(IF-THEN ,(parse:tokens (cadr (assq 'predicate parsed)))
-		,(parse:tokens (cadr (assq 'consequent parsed))))))
+      `(IF-THEN
+	,(list
+	  (parse:create-assoc 'predicate parsed)
+	  (parse:create-assoc 'consequent parsed)))))
   syn:if-then?)
 
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:take? tokens)))
-      `(TAKE ,(parse:tokens (cadr (assq 'taker parsed)))
-	     ,(parse:tokens (cadr (assq 'object parsed))))))
+      `(TAKE 
+	,(list
+	  (parse:create-assoc 'taker parsed)
+	  (parse:create-assoc 'object parsed)))))
   syn:take?)
 
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:take-from? tokens)))
-      `(TAKE-FROM ,(parse:tokens (cadr (assq 'taker parsed)))
-		  ,(parse:tokens (cadr (assq 'object parsed)))
-		  ,(parse:tokens (cadr (assq 'takee parsed))))))
+      `(TAKE-FROM 
+	,(list
+	  (parse:create-assoc 'taker parsed)
+	  (parse:create-assoc 'object parsed)
+	  (parse:create-assoc 'takee parsed)))))
   syn:take-from?)
 
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:harm? tokens)))
-      `(HARMS ,(parse:tokens (cadr (assq 'agressor parsed)))
-	      ,(parse:tokens (cadr (assq 'victim parsed))))))
+      `(HARMS 
+	,(list
+	  (parse:create-assoc 'agressor parsed)
+	  (parse:create-assoc 'victim parsed)))))
   syn:harm?)
 
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:generic-action? tokens)))
-      `(ACTION ,(parse:tokens (cadr (assq 'class-word parsed)))
-	       ,(parse:tokens (cadr (assq 'actor parsed)))
-	       ,(parse:tokens (cadr (assq 'else parsed))))))
+      `(ACTION 
+	,(list
+	  (parse:create-assoc 'class-word parsed 'action)
+	  (parse:create-assoc 'actor parsed)
+	  (parse:create-assoc 'else parsed)))))
   syn:generic-action?)
 
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:path? tokens)))
-      `(PATH ,(parse:tokens (cadr (assq 'class-word parsed)))
-	     ,(parse:tokens (cadr (assq 'else parsed))))))
+      `(PATH 
+	,(list
+	  (parse:create-assoc 'class-word parsed 'path)
+	  (parse:create-assoc 'else parsed)))))
   syn:path?)
 
 ;; dictionary

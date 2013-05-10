@@ -231,13 +231,17 @@
       match
       #f))
 
+(define (syn:is-type? tokens)
+  (syn:single-match tokens '((?? object) "is" "type" (?? type))))
+
 (define (syn:is-a? tokens)
-	(let ((parsed (syn:single-match tokens '((?? object) "is" (?? property)))))
-	(if parsed
-	 (if (= (length (cadr (assq 'object parsed))) 0)
-		#f
-		parsed)
-	 #f)))
+  (let ((parsed (syn:single-match tokens '((?? object) "is" (?? property)))))
+    (if (and parsed
+	     (not (syn:is-type? tokens)))
+	(if (= (length (cadr (assq 'object parsed))) 0)
+	    #f
+	    parsed)
+	#f)))
 
 (define (syn:article? tokens)
   (syn:floor-priority
@@ -292,6 +296,15 @@
 	    
 (define parse:tokens
   (make-generic-operator 1 'nop (lambda (tokens) tokens)))
+
+(defhandler parse:tokens
+  (lambda (tokens)
+    (let ((parsed (syn:is-type? tokens)))
+      `(IS-TYPE
+	,(list
+	  (parse:create-assoc 'object parsed)
+	  (parse:create-assoc 'type parsed)))))
+  syn:is-type?)
 
 (defhandler parse:tokens
   (lambda (tokens)

@@ -1,0 +1,9 @@
+America is type country.
+Britain is type country.
+Zimbabwe is type country.
+America is powerful.
+America attacks Britain.
+Britain takes land from America.
+If America attacks Britain, then America and Britain go to war.
+Zimbabwe takes candy.
+Zimbabwe hides.

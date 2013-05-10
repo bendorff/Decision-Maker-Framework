@@ -1,4 +1,4 @@
-A country is an entity.
+A country is type entity.
 A country is a place.
 America is a country.
 Britain is a country.

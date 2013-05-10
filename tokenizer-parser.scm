@@ -454,7 +454,7 @@
 (add-words-to-class! 'article "a" "an" "the")
 
 (create-word-class! 'action)
-(add-words-to-class! 'action "jump" "jumps" "runs")
+(add-words-to-class! 'action "jump" "jumps" "runs" "likes")
 
 (create-word-class! 'path)
 (add-words-to-class! 'path "over" "under" "through" "past" "by" "to" "above")

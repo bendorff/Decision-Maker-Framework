@@ -123,3 +123,146 @@
 		   " "
 		   (deparse:tokens (deparse:get-property 'else tokens))))
   (deparse:is-type? 'path))
+
+(define (deparse:kb-get-parsed-type kb-tokens)
+  (if (pair? (cadr kb-tokens))
+      (cadr (assoc 'type (cadr kb-tokens)))
+      #f))
+
+(define (deparse:kb-type? type)
+  (lambda (kb-tokens)
+    (and
+     (pair? kb-tokens)
+     (not (= (length kb-tokens) 1))
+     (equal? (deparse:kb-get-parsed-type kb-tokens) type))))
+
+(define deparse:kb
+  (make-generic-operator 
+   1 
+   'tmp 
+   (lambda (kb-tokens) 
+     (if (pair? kb-tokens)
+	 (apply string-append (deparse:spacify kb-tokens))
+	 kb-tokens))))
+
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (pp kb-tokens)
+    (pp (caadar kb-tokens))
+    (string-append "If "
+		   (deparse:tokens (caadar kb-tokens))
+		   "."))
+  (deparse:kb-type? 'predicate))
+
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "Then "
+		   (deparse:kb (caadar kb-tokens))
+		   "."))
+  (deparse:kb-type? 'consequent))
+
+(define (deparse:kb-multi kb-tokens)
+  (map
+   (lambda (new-kb-tokens)
+     (deparse:kb new-kb-tokens))
+   (map (lambda (old-tokens) (cons (car kb-tokens) (list old-tokens))) kb-tokens)))
+
+;works
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "It is "
+		   (deparse:kb (cadadr kb-tokens))
+		   "."))
+  (deparse:kb-type? 'is-a))
+
+;works
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "It is type "
+		   (deparse:kb (cadadr kb-tokens))
+		   "."))
+  (deparse:kb-type? 'is-type))
+
+;works
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append (deparse:kb (cadadr kb-tokens))
+		   " has this property."))
+  (deparse:kb-type? 'is-a-prop))
+
+;works
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append (deparse:kb (cadadr kb-tokens))
+		   " has this type."))
+  (deparse:kb-type? 'is-a-type))
+
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "It takes "
+		   (deparse:kb (cadr (assoc 'object (cadr kb-tokens))))
+		   "."))
+  (deparse:kb-type? 'takes))
+
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (pp (cdr kb-tokens))
+    (string-append "It takes "
+		   (deparse:kb (cadr (assoc 'object (cadr kb-tokens))))
+		   " from "
+		   (deparse:kb (cadr (assoc 'takee (cadr kb-tokens))))
+		   "."))
+  (deparse:kb-type? 'takes-from))
+
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "It loses "
+		   (deparse:kb (cadr (assoc 'object (cadr kb-tokens))))
+		   " to "
+		   (deparse:kb (cadr (assoc 'taker (cadr kb-tokens))))
+		   "."))
+  (deparse:kb-type? 'loses-to))
+
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "It harms "
+		   (deparse:kb (cadr (assoc 'victim (cadr kb-tokens))))
+		   "."))
+  (deparse:kb-type? 'harms))
+
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "It is harmed by "
+		   (deparse:kb (cadr (assoc 'aggressor (cadr kb-tokens))))
+		   "."))
+  (deparse:kb-type? 'harmed-by))
+
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (let ((tmpstr ""))
+      (if (not (assoc 'else (cdr kb-tokens)))
+	  (set! tmpstr ".")
+	  (set! tmpstr (string-append (cadr (assoc 'else (cadr kb-tokens))) ".")))
+      (string-append "It "
+		     (deparse:kb (cadr (assoc 'action (cadr kb-tokens))))
+		     tmpstr)))
+  (deparse:kb-type? 'action))
+
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (let ((tmpstr ""))
+      (if (not (assoc 'else (cdr kb-tokens)))
+	  (set! tmpstr ".")
+	  (set! tmpstr (string-append (cadr (assoc 'else (cadr kb-tokens))) ".")))
+      (string-append (deparse:kb (cadr (assoc 'actor (cadr kb-tokens))))
+		     " does it "
+		     tmpstr)))
+  (deparse:kb-type? 'actor))
+
+;; takes
+;; takes-from
+;; loses-to
+;; harms
+;; harmed-by
+;; action
+;; actor

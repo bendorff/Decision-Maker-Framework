@@ -115,8 +115,8 @@
 	     (hash-table/get kb (cadr (assoc 'taker asc)) '()))
 	    (objs-lost
 	     (hash-table/get kb (cadr (assoc 'takee asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'taker asc)) (cons (list (cons 'type '(takes)) (assoc 'object asc) (assoc 'takee asc)) objs-gained))
-	(hash-table/put! kb (cadr (assoc 'takee asc)) (cons (list (cons 'type '(loses)) (assoc 'object asc) (assoc 'taker asc)) objs-lost)))))
+	(hash-table/put! kb (cadr (assoc 'taker asc)) (cons (list (cons 'type '(takes-from)) (assoc 'object asc) (assoc 'takee asc)) objs-gained))
+	(hash-table/put! kb (cadr (assoc 'takee asc)) (cons (list (cons 'type '(loses-to)) (assoc 'object asc) (assoc 'taker asc)) objs-lost)))))
   (know:is-type? 'take-from))
 
 (defhandler know:create-specialized-event-knowledge!
@@ -127,7 +127,7 @@
 	     (hash-table/get kb (cadr (assoc 'aggressor asc)) '()))
 	    (harmed
 	     (hash-table/get kb (cadr (assoc 'victim asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'aggressor asc)) (cons (list (cons 'type (list 'harms)) (assoc 'victim asc)) harms))
+	(hash-table/put! kb (cadr (assoc 'aggressor asc)) (cons (list (cons 'type (list harms)) (assoc 'victim asc)) harms))
 	(hash-table/put! kb (cadr (assoc 'victim asc)) (cons (list (cons 'type (list 'harmed-by)) (assoc 'aggressor asc)) harmed)))))
   (know:is-type? 'harms))
 
@@ -192,6 +192,9 @@
 (define (know:find-types object)
   (know:get-type-from-facts
    (hash-table/get (know:retrieve-knowledge-base 'facts) object '())))
+
+(define (know:find-facts object)
+  (hash-table/get (know:retrieve-knowledge-base 'facts) object '()))
 
 (define (know:find-object-by-type type)
   (hash-table/get (know:retrieve-knowledge-base 'facts) type '()))

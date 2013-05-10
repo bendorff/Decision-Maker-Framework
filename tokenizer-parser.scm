@@ -302,7 +302,7 @@
 (define (syn:when-is? tokens)
   (syn:high-priority
     tokens
-    (syn:class-match tokens (get-full-word-class 'when) (lambda (word) `("when" ,word (?? action))))))
+    (syn:class-match tokens (get-full-word-class 'when) (lambda (word) `("when" ,word (?? consequent))))))
 
 ;; handler for parsing language
 
@@ -432,7 +432,7 @@
       `(WHEN-IS
 	,(list
 	  (parse:create-assoc 'class-word parsed 'when-is)
-	  (parse:create-assoc 'action parsed)))))
+	  (parse:create-assoc 'consequent parsed)))))
   syn:when-is?)
 
 ;; dictionary
@@ -455,7 +455,7 @@
 (add-words-to-class! 'query "what" "why" "when" "who" "how" "where")
 
 (create-word-class! 'when)
-(add-words-to-class! 'when "is" "does" "are")
+(add-words-to-class! 'when "is" "does" "are" "do")
 
 (create-word-subclass! 'action 'take)
 (add-words-to-subclass! 'action 'take "take" "takes" "took" 

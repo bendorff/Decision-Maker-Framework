@@ -303,6 +303,11 @@
   (syn:high-priority
     tokens
     (syn:class-match tokens (get-full-word-class 'when) (lambda (word) `("when" ,word (?? consequent))))))
+    
+(define (syn:what-if? tokens)
+  (syn:high-priority
+    tokens
+    (syn:single-match tokens '("what" (?? construction) "if" (?? predicate)))))
 
 ;; handler for parsing language
 
@@ -434,6 +439,14 @@
 	  (parse:create-assoc 'class-word parsed 'when-is)
 	  (parse:create-assoc 'consequent parsed)))))
   syn:when-is?)
+  
+(defhandler parse:tokens
+  (lambda (tokens)
+    (let ((parsed (syn:what-if? tokens)))
+      `(WHAT-IF
+	,(list
+	  (parse:create-assoc 'predicate parsed)))))
+  syn:what-if?)
 
 ;; dictionary
 

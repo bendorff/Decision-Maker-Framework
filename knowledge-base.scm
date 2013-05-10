@@ -170,6 +170,9 @@
 	((know:is-event? parsed-tokens)
 	 (know:create-specialized-event-knowledge! parsed-tokens))))
 
+(define (know:learn-string! string)
+  (know:learn! (parse-string string)))
+
 (define (know:learn-file! filename)
   (for-each know:learn! (parse filename)))
 
@@ -218,15 +221,70 @@
 (define (know:find-all-rules)
   (hash-table->alist (know:retrieve-knowledge-base 'rules))) 
   
-(define (know:query query)
-  (let 
-    ((parsed-query (parse-string query)))
-    (cond ((string=? "what-is" (string (car parsed-query))) 
-		   (know:find-types (car (cdaadr parsed-query))))
-		  ((string=? "when-is" (string (car parsed-query))) 
-		   (know:find-cause (cadr (cadadr parsed-query))))
-		  ((string=? "who-is" (string (car parsed-query))) 
-		   (know:find-object-by-prop (car (cdaadr parsed-query))))
-		  ((string=? "who" (string (car parsed-query))) 
-		   (know:find-actors (cadr (caadar (cdaadr parsed-query)))))
-	)))
+(define (know:ask query)
+  (let ((parsed-query (parse-string query)))
+    (know:query parsed-query)))
+  
+(define know:query (make-generic-operator 1))
+	
+(define (query:what-is? parsed-query)
+  (string=? "what-is" (string (car parsed-query)))) 
+  
+(define (query:when-is? parsed-query)
+  (string=? "when-is" (string (car parsed-query)))) 
+  
+(define (query:who-is? parsed-query)
+  (string=? "who-is" (string (car parsed-query)))) 
+  
+(define (query:who? parsed-query)
+  (string=? "who" (string (car parsed-query)))) 
+  
+(define (query:what-if? parsed-query)
+  (string=? "what-if" (string (car parsed-query)))) 
+	
+(defhandler know:query 
+  (lambda (parsed-query)
+    (let ((types (know:find-types (car (cdaadr parsed-query)))))
+      (if (null? types) 
+          (string-append 
+            (deparse:tokens (cdr parsed-query)) "is nothing.")
+          (apply string-append (deparse:kb-multi types)))))
+  query:what-is?)
+
+(defhandler know:query 
+  (lambda (parsed-query)
+    (let ((causes (know:find-cause (cadr (cadadr parsed-query)))))
+      (if (null? causes) 
+          (string-append 
+            (deparse:tokens (cdr parsed-query)) "will never happen.")
+          (apply string-append (deparse:kb-multi causes)))))
+  query:when-is?)
+  
+(defhandler know:query 
+  (lambda (parsed-query)
+    (let ((object (know:find-object-by-prop 
+				    (car (cdaadr parsed-query)))))
+      (if (null? object) 
+          (string-append 
+            "No one is" (deparse:tokens (cdr parsed-query)) ".")
+          (apply string-append (deparse:kb-multi object)))))
+  query:who-is?)
+  
+(defhandler know:query 
+  (lambda (parsed-query)
+    (let ((actors (know:find-actors 
+				    (cadr (caadar (cdaadr parsed-query))))))
+      (if (null? actors) 
+          (string-append "No one" (deparse:tokens (cdr parsed-query)) ".")
+          (apply string-append (deparse:kb-multi actors))))) 
+  query:who?)
+
+(defhandler know:query 
+  (lambda (parsed-query)
+    (let ((consequences 
+            (know:find-consequence (car (cdaadr parsed-query)))))
+      (if (null? consequences) 
+          (string-append 
+            "Nothing happens if " (deparse:tokens (cdr parsed-query)) ".")
+          (apply string-append (deparse:kb-multi consequences))))) 
+  query:what-if?)

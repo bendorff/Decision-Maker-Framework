@@ -19,7 +19,7 @@
 ;; (know:find-types "america")
 ;; 
 ;; (know:find-object-by-type "country")
-;; (know:find-object-by-property "powerful")
+;; (know:find-object-by-prop "powerful")
 ;;
 ;; (know:find-actions "runs")
 ;; (know:find-actors "britain")
@@ -56,11 +56,11 @@
 	  (type (know:get-parsed-type parsed-tokens))
 	  (asc (know:get-parsed-assoc parsed-tokens)))
       (let ((preds
-	     (hash-table/get kb (cdr (assoc 'predicate asc)) '()))
+	     (hash-table/get kb (cadr (assoc 'predicate asc)) '()))
 	    (cnsqs
-	     (hash-table/get kb (cdr (assoc 'consequent asc)) '())))
-	(hash-table/put! kb (cdr (assoc 'predicate asc)) (cons (list (cons 'type '(consequent)) (cdr (assoc 'consequent asc))) preds))
-	(hash-table/put! kb (cdr (assoc 'consequent asc)) (cons (list (cons 'type '(predicate)) (cdr (assoc 'predicate asc))) cnsqs))))
+	     (hash-table/get kb (cadr (assoc 'consequent asc)) '())))
+	(hash-table/put! kb (cadr (assoc 'predicate asc)) (cons (list (cons 'type '(consequent)) (cdr (assoc 'consequent asc))) preds))
+	(hash-table/put! kb (cadr (assoc 'consequent asc)) (cons (list (cons 'type '(predicate)) (cdr (assoc 'predicate asc))) cnsqs))))
     'done)
   (know:is-type? 'if-then))
 

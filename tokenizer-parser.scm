@@ -207,7 +207,6 @@
       (or
        (syn:take? tokens)
        (syn:take-from? tokens)
-       (syn:query? tokens)
        (syn:harm? tokens))
       #f))
 
@@ -309,13 +308,16 @@
 
 (define (parse:create-assoc property parsed #!optional tag)
   (let ((result (parse:tokens (cadr (assq property parsed)))))
+    (if (and (pair? result)
+	     (= (length result) 1))
+	(set! result (car result)))
     (if (default-object? tag)
 	(let ((tag property))
 	  (if (string? result)
-	      (list tag (list result))
+	      (cons tag (list result))
 	      (list tag result)))
 	(if (string? result)
-	    (list tag (list result))
+	    (cons tag (list result))
 	    (list tag result)))))
 	    
 (define parse:tokens

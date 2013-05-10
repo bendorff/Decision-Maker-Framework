@@ -213,4 +213,17 @@
   (hash-table->alist (know:retrieve-knowledge-base 'facts)))
 
 (define (know:find-all-rules)
-  (hash-table->alist (know:retrieve-knowledge-base 'rules)))
+  (hash-table->alist (know:retrieve-knowledge-base 'rules))) 
+  
+(define (know:query query)
+  (let 
+    ((parsed-query (parse-string query)))
+    (cond ((string=? "what-is" (string (car parsed-query))) 
+		   (know:find-types (caar (cdaadr parsed-query))))
+		  ((string=? "when-is" (string (car parsed-query))) 
+		   (know:find-actors (caar (cdaadr parsed-query))))
+		  ((string=? "who-is" (string (car parsed-query))) 
+		   (know:find-object-by-prop (caar (cdaadr parsed-query))))
+		  ((string=? "who" (string (car parsed-query))) 
+		   (know:find-actors (caadr (caadar (cdaadr parsed-query)))))
+	)))

@@ -12,10 +12,8 @@ Ben is a person.
 Victor is a person.
 Ben is short.
 Ben takes Victor's glass.
-Is Victor justified in harming Ben?
 Who is Ben?
 What is America?
-What is America justified to do?
 Ben is 66 inches tall.
 How tall is Ben?
 Victor is 72 inches tall.
@@ -23,3 +21,5 @@ Is Ben taller than victor?
 Ben runs to Star.
 Ben is allowed to run to Star when Victor runs to Star.
 When is Ben allowed to run to Star?
+What is Ben?
+When does America harm Britain?

@@ -197,7 +197,7 @@
   (or
    (syn:is-a? tokens)
    (syn:if-then? tokens)
-   (syn:query? tokens)))
+   (syn:what-is? tokens)))
    
 (define (syn:high-priority tokens match)
   match)
@@ -207,6 +207,7 @@
       (or
        (syn:take? tokens)
        (syn:take-from? tokens)
+       (syn:query? tokens)
        (syn:harm? tokens))
       #f))
 
@@ -284,10 +285,25 @@
    tokens
    (syn:class-match tokens (get-full-word-class 'path) (lambda (word) `(,word (?? else))))))
    
-(define (syn:query? tokens)
+(define (syn:what-is? tokens)
   (syn:high-priority
     tokens
-    (syn:class-match tokens (get-full-word-class 'query) (lambda (word) `(,word (?? query-body))))))
+    (syn:single-match tokens '("what" "is" (?? object)))))
+    
+(define (syn:who-is? tokens)
+  (syn:high-priority
+    tokens
+    (syn:single-match tokens '("who" "is" (?? property)))))
+    
+(define (syn:who? tokens)
+  (syn:medium-priority
+    tokens
+    (syn:single-match tokens '("who" (?? action)))))
+    
+(define (syn:when-is? tokens)
+  (syn:high-priority
+    tokens
+    (syn:class-match tokens (get-full-word-class 'when) (lambda (word) `("when" ,word (?? action))))))
 
 ;; handler for parsing language
 
@@ -296,11 +312,11 @@
     (if (default-object? tag)
 	(let ((tag property))
 	  (if (string? result)
-	      (cons tag (list result))
-	      (cons tag result)))
+	      (list tag (list result))
+	      (list tag result)))
 	(if (string? result)
-	    (cons tag (list result))
-	    (cons tag result)))))
+	    (list tag (list result))
+	    (list tag result)))))
 	    
 (define parse:tokens
   (make-generic-operator 1 'nop (lambda (tokens) tokens)))
@@ -383,15 +399,39 @@
 	  (parse:create-assoc 'class-word parsed 'path)
 	  (parse:create-assoc 'else parsed)))))
   syn:path?)
+
+(defhandler parse:tokens
+  (lambda (tokens)
+    (let ((parsed (syn:what-is? tokens)))
+      `(WHAT-IS
+	,(list
+	  (parse:create-assoc 'object parsed)))))
+  syn:what-is?)
   
 (defhandler parse:tokens
   (lambda (tokens)
-    (let ((parsed (syn:query? tokens)))
-      `(QUERY 
+    (let ((parsed (syn:who-is? tokens)))
+      `(WHO-IS
 	,(list
-	  (parse:create-assoc 'class-word parsed 'query)
-	  (parse:create-assoc 'query-body parsed)))))
-  syn:query?)
+	  (parse:create-assoc 'property parsed)))))
+  syn:who-is?)
+  
+(defhandler parse:tokens
+  (lambda (tokens)
+    (let ((parsed (syn:who? tokens)))
+      `(WHO
+	,(list
+	  (parse:create-assoc 'action parsed)))))
+  syn:who?)
+  
+(defhandler parse:tokens
+  (lambda (tokens)
+    (let ((parsed (syn:when-is? tokens)))
+      `(WHEN-IS
+	,(list
+	  (parse:create-assoc 'class-word parsed 'when-is)
+	  (parse:create-assoc 'action parsed)))))
+  syn:when-is?)
 
 ;; dictionary
 
@@ -410,7 +450,10 @@
 								   "permit" "permits" "permitted")
 								   
 (create-word-class! 'query)
-(add-words-to-class! 'query "what" "why" "when" "who" "how")
+(add-words-to-class! 'query "what" "why" "when" "who" "how" "where")
+
+(create-word-class! 'when)
+(add-words-to-class! 'when "is" "does" "are")
 
 (create-word-subclass! 'action 'take)
 (add-words-to-subclass! 'action 'take "take" "takes" "took" 

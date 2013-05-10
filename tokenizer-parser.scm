@@ -34,35 +34,40 @@
 
 ;;; Tokenizer
 
+(define (split line split-charset punc-charset)
+  (let split-lp ((buffer "")
+		 (rem-line line)
+		 (tokens '()))
+    (if (= (string-length rem-line) 0)
+	(if (= (string-length buffer) 0)
+	    tokens
+	    (append tokens (list (string-downcase buffer))))
+	(let ((cur-char (string-ref rem-line 0)))
+	  (cond 
+	   ((char-set-member? split-charset cur-char)
+	    (if (= (string-length buffer) 0)
+		(split-lp "" (substring rem-line 1 (string-length rem-line)) tokens)
+		(split-lp "" (substring rem-line 1 (string-length rem-line)) (append tokens (list (string-downcase buffer))))))
+	   ((char-set-member? punc-charset cur-char)
+	    (if (= (string-length buffer) 0)
+		(split-lp "" (substring rem-line 1 (string-length rem-line)) tokens)
+		(split-lp "" (substring rem-line 1 (string-length rem-line)) (append tokens (list (string-downcase buffer))))))
+	   (else
+	    (split-lp (string-append buffer (string cur-char)) (substring rem-line 1 (string-length rem-line)) tokens)))))))
+
+(define split-charset (char-set #\space))
+(define punc-charset (char-set #\! #\# #\$ #\% #\& #\( #\) #\* #\+ #\, #\- #\. #\/ #\: #\; #\< #\= #\> #\? #\@ #\[ #\\ #\] #\^ #\_ #\` #\{ #\| #\} #\~)) 
+
 (define (tokenize filename)
-  (define split-charset (char-set #\space))
-  (define punc-charset (char-set #\! #\# #\$ #\% #\& #\( #\) #\* #\+ #\, #\- #\. #\/ #\: #\; #\< #\= #\> #\? #\@ #\[ #\\ #\] #\^ #\_ #\` #\{ #\| #\} #\~)) 
-  (define (split line)
-    (let split-lp ((buffer "")
-		   (rem-line line)
-		   (tokens '()))
-      (if (= (string-length rem-line) 0)
-	  (if (= (string-length buffer) 0)
-	      tokens
-	      (append tokens (list (string-downcase buffer))))
-	  (let ((cur-char (string-ref rem-line 0)))
-	    (cond 
-	     ((char-set-member? split-charset cur-char)
-	      (if (= (string-length buffer) 0)
-		  (split-lp "" (substring rem-line 1 (string-length rem-line)) tokens)
-		  (split-lp "" (substring rem-line 1 (string-length rem-line)) (append tokens (list (string-downcase buffer))))))
-	     ((char-set-member? punc-charset cur-char)
-	      (if (= (string-length buffer) 0)
-		  (split-lp "" (substring rem-line 1 (string-length rem-line)) tokens)
-		  (split-lp "" (substring rem-line 1 (string-length rem-line)) (append tokens (list (string-downcase buffer))))))
-	     (else
-	      (split-lp (string-append buffer (string cur-char)) (substring rem-line 1 (string-length rem-line)) tokens)))))))
   (let ((file (open-input-file filename)))
-	(let token-lp ((tokens-list '())
-		       (cur-line (read-line file)))
-	  (if (eof-object? cur-line)
-	      tokens-list
-	      (token-lp (append tokens-list (list (split cur-line))) (read-line file))))))
+    (let token-lp ((tokens-list '())
+		   (cur-line (read-line file)))
+      (if (eof-object? cur-line)
+	  tokens-list
+	  (token-lp (append tokens-list (list (split cur-line split-charset punc-charset))) (read-line file))))))
+
+(define (tokenize-string string)
+  (split string split-charset punc-charset))
     
 ;;; work for simple english below here
 
@@ -72,6 +77,9 @@
     (if (= (length tokens) 0)
         k-list
         (parse-lp (append k-list (list (parse:tokens (car tokens)))) (cdr tokens)))))
+
+(define (parse-string string)
+  (parse:tokens (tokenize-string string)))
 
 ;; Word class definition functions.
 

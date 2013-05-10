@@ -6,3 +6,5 @@
 (load "ghelper")
 (load "matcher")
 (load "tokenizer-parser")
+(load "knowledge-base")
+(know:initialize-knowledge-base!)

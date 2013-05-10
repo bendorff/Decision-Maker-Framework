@@ -1,5 +1,30 @@
 ;; knowledge base for decision maker
 
+;;;; Example of usage:
+;;
+;; Putting knowledge into the system from a file:
+;; (know:learn-file! "example2.txt")
+;; 
+;; To see what's in the knowledge base:
+;; (know:find-all-events)
+;; (know:find-all-facts)
+;; (know:find-all-rules)
+;;
+;; To query:
+;;
+;; (know:find-consequence (parse-string "america harms britain"))
+;; (know:find-cause (parse-string "america and britain go to war"))
+;;
+;; (know:find-properties "america")
+;; (know:find-types "america")
+;; 
+;; (know:find-object-by-type "country")
+;; (know:find-object-by-property "powerful")
+;;
+;; (know:find-actions "runs")
+;; (know:find-actors "britain")
+;;
+
 (define knowledge-base (make-eq-hash-table))
 
 ;; NOTE: This *will* reinitialize the knowledge base, erasing all the data within!
@@ -31,11 +56,11 @@
 	  (type (know:get-parsed-type parsed-tokens))
 	  (asc (know:get-parsed-assoc parsed-tokens)))
       (let ((preds
-	     (hash-table/get kb (cadr (assoc 'predicate asc)) '()))
+	     (hash-table/get kb (cdr (assoc 'predicate asc)) '()))
 	    (cnsqs
-	     (hash-table/get kb (cadr (assoc 'consequent asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'predicate asc)) (cons (list (cons 'type '(consequent)) (cdr (assoc 'consequent asc))) preds))
-	(hash-table/put! kb (cadr (assoc 'consequent asc)) (cons (list (cons 'type '(predicate)) (cdr (assoc 'predicate asc))) cnsqs))))
+	     (hash-table/get kb (cdr (assoc 'consequent asc)) '())))
+	(hash-table/put! kb (cdr (assoc 'predicate asc)) (cons (list (cons 'type '(consequent)) (cdr (assoc 'consequent asc))) preds))
+	(hash-table/put! kb (cdr (assoc 'consequent asc)) (cons (list (cons 'type '(predicate)) (cdr (assoc 'predicate asc))) cnsqs))))
     'done)
   (know:is-type? 'if-then))
 
@@ -62,9 +87,9 @@
 	  (type (know:get-parsed-type parsed-tokens))
 	  (asc (know:get-parsed-assoc parsed-tokens)))
       (let ((objs
-	     (hash-table/get kb (cadr (assoc 'object asc)) '()))
+	     (hash-table/get kb (cadr (assoc 'type asc)) '()))
 	    (types
-	     (hash-table/get kb (cadr (assoc 'type asc)) '())))
+	     (hash-table/get kb (cadr (assoc 'object asc)) '())))
 	(hash-table/put! kb (cadr (assoc 'object asc)) (cons (list (cons 'type '(is-type)) (cdr (assoc 'type asc))) types))
 	(hash-table/put! kb (cadr (assoc 'type asc)) (cons (list (cons 'type '(is-a-type)) (cdr (assoc 'object asc))) objs))))
     'done)
@@ -145,6 +170,9 @@
 	((know:is-event? parsed-tokens)
 	 (know:create-specialized-event-knowledge! parsed-tokens))))
 
+(define (know:learn-file! filename)
+  (for-each know:learn! (parse filename)))
+
 (define (know:find-consequence predicate)
   (hash-table/get (know:retrieve-knowledge-base 'rules) predicate '()))
 
@@ -152,10 +180,10 @@
   (hash-table/get (know:retrieve-knowledge-base 'rules) consequent '()))
 
 (define (know:get-type-from-facts fact-list)
-  (filter (lambda (fact) (equal? (assoc 'type fact) 'is-type)) fact-list))
+  (filter (lambda (fact) (equal? (cadar fact) 'is-type)) fact-list))
 
 (define (know:get-props-from-facts fact-list)
-  (filter (lambda (fact) (equal? (assoc 'type fact) 'is-a)) fact-list))
+  (filter (lambda (fact) (equal? (cadar fact) 'is-a)) fact-list))
 
 (define (know:find-properties object)
   (know:get-props-from-facts
@@ -176,3 +204,13 @@
 
 (define (know:find-actors action)
   (hash-table/get (know:retrieve-knowledge-base 'event-knowledge) action '()))
+
+;these functions dump the hash table as assoc lists
+(define (know:find-all-events)
+  (hash-table->alist (know:retrieve-knowledge-base 'event-knowledge)))
+
+(define (know:find-all-facts)
+  (hash-table->alist (know:retrieve-knowledge-base 'facts)))
+
+(define (know:find-all-rules)
+  (hash-table->alist (know:retrieve-knowledge-base 'rules)))

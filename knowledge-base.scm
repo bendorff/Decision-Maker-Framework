@@ -1,4 +1,4 @@
-;; knowledge base for decision maker
+;;;; Knowledge Base for Decision-Maker
 
 ;;;; Example of usage:
 ;;
@@ -24,12 +24,22 @@
 ;; (know:find-actions "runs")
 ;; (know:find-actors "britain")
 ;;
+;; Or simply use know:ask
+;;
+;; (know:ask "Who is powerful?"
+;; (know:ask "What is America?"
+;; (know:ask "Who runs?")
+;; (know:ask "When do America and Britain go to war?")
+;; (know:ask "What happens if America attacks Britain?")
+;;
 
 (define knowledge-base (make-eq-hash-table))
 
-;; NOTE: This *will* reinitialize the knowledge base, erasing all the data within!
+;; NOTE: This *will* reinitialize the knowledge base, 
+;; erasing all the data within!
 (define (know:initialize-knowledge-base!)
-  (hash-table/put! knowledge-base 'event-knowledge (make-equal-hash-table))
+  (hash-table/put! knowledge-base 
+				   'event-knowledge (make-equal-hash-table))
   (hash-table/put! knowledge-base 'rules (make-equal-hash-table))
   (hash-table/put! knowledge-base 'facts (make-equal-hash-table))
   'done)
@@ -48,7 +58,10 @@
     (equal? (know:get-parsed-type parsed-tokens) type)))
 
 (define know:create-rule!
-  (make-generic-operator 1 'error (lambda (parsed-tokens) (error "Handler not found"))))
+  (make-generic-operator 
+    1 
+	'error 
+	(lambda (parsed-tokens) (error "Handler not found"))))
 
 (defhandler know:create-rule!
   (lambda (parsed-tokens)
@@ -59,13 +72,24 @@
 	     (hash-table/get kb (cadr (assoc 'predicate asc)) '()))
 	    (cnsqs
 	     (hash-table/get kb (cadr (assoc 'consequent asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'predicate asc)) (cons (list (cons 'type '(consequent)) (cdr (assoc 'consequent asc))) preds))
-	(hash-table/put! kb (cadr (assoc 'consequent asc)) (cons (list (cons 'type '(predicate)) (cdr (assoc 'predicate asc))) cnsqs))))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'predicate asc)) 
+	  (cons (list (cons 'type '(consequent)) 
+				  (cdr (assoc 'consequent asc))) preds))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'consequent asc)) 
+	  (cons (list (cons 'type '(predicate)) 
+				  (cdr (assoc 'predicate asc))) cnsqs))))
     'done)
   (know:is-type? 'if-then))
 
 (define know:create-fact!
-  (make-generic-operator 1 'error (lambda (parsed-tokens) (error "Handler not found"))))
+  (make-generic-operator 
+    1 
+    'error 
+    (lambda (parsed-tokens) (error "Handler not found"))))
 
 (defhandler know:create-fact!
   (lambda (parsed-tokens)
@@ -76,8 +100,16 @@
 	     (hash-table/get kb (cadr (assoc 'object asc)) '()))
 	    (props
 	     (hash-table/get kb (cadr (assoc 'property asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'object asc)) (cons (list (cons 'type '(is-a)) (cdr (assoc 'property asc))) objs))
-	(hash-table/put! kb (cadr (assoc 'property asc)) (cons (list (cons 'type '(is-a-prop)) (cdr (assoc 'object asc))) props))))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'object asc)) 
+	  (cons (list (cons 'type '(is-a)) 
+				  (cdr (assoc 'property asc))) objs))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'property asc)) 
+	  (cons (list (cons 'type '(is-a-prop)) 
+				  (cdr (assoc 'object asc))) props))))
     'done)
   (know:is-type? 'is-a))
 
@@ -90,13 +122,24 @@
 	     (hash-table/get kb (cadr (assoc 'type asc)) '()))
 	    (types
 	     (hash-table/get kb (cadr (assoc 'object asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'object asc)) (cons (list (cons 'type '(is-type)) (cdr (assoc 'type asc))) types))
-	(hash-table/put! kb (cadr (assoc 'type asc)) (cons (list (cons 'type '(is-a-type)) (cdr (assoc 'object asc))) objs))))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'object asc)) 
+	  (cons (list (cons 'type '(is-type)) 
+				  (cdr (assoc 'type asc))) types))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'type asc)) 
+	  (cons (list (cons 'type '(is-a-type)) 
+				  (cdr (assoc 'object asc))) objs))))
     'done)
   (know:is-type? 'is-type))
 
 (define know:create-specialized-event-knowledge!
-  (make-generic-operator 1 'error (lambda (parsed-tokens) (error "Handler not found"))))
+  (make-generic-operator 
+    1 
+    'error 
+    (lambda (parsed-tokens) (error "Handler not found"))))
 
 (defhandler know:create-specialized-event-knowledge!
   (lambda (parsed-tokens)
@@ -104,7 +147,11 @@
 	  (asc (know:get-parsed-assoc parsed-tokens)))
       (let ((objs
 	     (hash-table/get kb (cadr (assoc 'taker asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'taker asc)) (cons (list (cons 'type '(takes)) (assoc 'object asc)) objs)))))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'taker asc)) 
+	  (cons (list (cons 'type '(takes)) 
+				  (assoc 'object asc)) objs)))))
   (know:is-type? 'take))
 
 (defhandler know:create-specialized-event-knowledge!
@@ -115,8 +162,20 @@
 	     (hash-table/get kb (cadr (assoc 'taker asc)) '()))
 	    (objs-lost
 	     (hash-table/get kb (cadr (assoc 'takee asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'taker asc)) (cons (list (cons 'type '(takes-from)) (assoc 'object asc) (assoc 'takee asc)) objs-gained))
-	(hash-table/put! kb (cadr (assoc 'takee asc)) (cons (list (cons 'type '(loses-to)) (assoc 'object asc) (assoc 'taker asc)) objs-lost)))))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'taker asc)) 
+	  (cons (list (cons 'type '(takes-from)) 
+				  (assoc 'object asc) 
+				  (assoc 'takee asc)) 
+			objs-gained))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'takee asc)) 
+	  (cons (list (cons 'type '(loses-to)) 
+				  (assoc 'object asc) 
+				  (assoc 'taker asc)) 
+			objs-lost)))))
   (know:is-type? 'take-from))
 
 (defhandler know:create-specialized-event-knowledge!
@@ -127,8 +186,18 @@
 	     (hash-table/get kb (cadr (assoc 'aggressor asc)) '()))
 	    (harmed
 	     (hash-table/get kb (cadr (assoc 'victim asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'aggressor asc)) (cons (list (cons 'type (list harms)) (assoc 'victim asc)) harms))
-	(hash-table/put! kb (cadr (assoc 'victim asc)) (cons (list (cons 'type (list 'harmed-by)) (assoc 'aggressor asc)) harmed)))))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'aggressor asc)) 
+	  (cons (list (cons 'type (list harms)) 
+				  (assoc 'victim asc)) 
+			harms))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'victim asc)) 
+	  (cons (list (cons 'type (list 'harmed-by)) 
+				  (assoc 'aggressor asc)) 
+			harmed)))))
   (know:is-type? 'harms))
 
 (defhandler know:create-specialized-event-knowledge!
@@ -139,8 +208,20 @@
 	     (hash-table/get kb (cadr (assoc 'actor asc)) '()))
 	    (actors
 	     (hash-table/get kb (cadr (assoc 'action asc)) '())))
-	(hash-table/put! kb (cadr (assoc 'actor asc)) (cons (list (cons 'type '(action)) (cons 'action (cdr (assoc 'action asc))) (assoc 'else asc)) actions))
-	(hash-table/put! kb (cadr (assoc 'action asc)) (cons (list (cons 'type '(actor)) (assoc 'actor asc) (assoc 'else asc)) actors)))))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'actor asc)) 
+	  (cons (list (cons 'type '(action)) 
+				  (cons 'action (cdr (assoc 'action asc))) 
+				  (assoc 'else asc)) 
+			actions))
+	(hash-table/put! 
+	  kb 
+	  (cadr (assoc 'action asc)) 
+	  (cons (list (cons 'type '(actor)) 
+				  (assoc 'actor asc) 
+				  (assoc 'else asc)) 
+			actors)))))
   (know:is-type? 'action))
 
 (define (know:is-rule? parsed-tokens)
@@ -247,7 +328,10 @@
     (let ((types (know:find-types (car (cdaadr parsed-query)))))
       (if (null? types) 
           (string-append 
-            (deparse:tokens (cdr parsed-query)) "is nothing.")
+            (deparse:tokens (deparse:get-property 
+							  'object 
+							  parsed-query)) 
+			" is nothing.")
           (apply string-append (deparse:kb-multi types)))))
   query:what-is?)
 
@@ -256,7 +340,10 @@
     (let ((causes (know:find-cause (cadr (cadadr parsed-query)))))
       (if (null? causes) 
           (string-append 
-            (deparse:tokens (cdr parsed-query)) "will never happen.")
+            (deparse:tokens (deparse:get-property 
+                             'consequent 
+                             parsed-query)) 
+            " will never happen.")
           (apply string-append (deparse:kb-multi causes)))))
   query:when-is?)
   
@@ -266,7 +353,11 @@
 				    (car (cdaadr parsed-query)))))
       (if (null? object) 
           (string-append 
-            "No one is" (deparse:tokens (cdr parsed-query)) ".")
+            "No one is "
+            (deparse:tokens (deparse:get-property 
+							  'property 
+							  parsed-query)) 
+            ".")
           (apply string-append (deparse:kb-multi object)))))
   query:who-is?)
   
@@ -275,7 +366,10 @@
     (let ((actors (know:find-actors 
 				    (caar (cdaadr parsed-query)))))
       (if (null? actors) 
-          (string-append "No one" (deparse:tokens (cdr parsed-query)) ".")
+          (string-append 
+            "No one " 
+			(deparse:tokens (deparse:get-property 'action parsed-query)) 
+			".")
           (apply string-append (deparse:kb-multi actors))))) 
   query:who?)
 
@@ -285,6 +379,10 @@
             (know:find-consequence (car (cdaadr parsed-query)))))
       (if (null? consequences) 
           (string-append 
-            "Nothing happens if " (deparse:tokens (cdr parsed-query)) ".")
+            "Nothing happens if " 
+            (deparse:tokens (deparse:get-property 
+						     'predicate 
+						     parsed-query)) 
+            ".")
           (apply string-append (deparse:kb-multi consequences))))) 
   query:what-if?)

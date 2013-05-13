@@ -1,37 +1,3 @@
-;;;; TO-DO:
-;;
-;; Strict English Subset
-;; English -> Scheme tokenizer/parser
-;; "inference machine"
-;; "knowledge base"
-
-;;;;;;;;;;;;;;;;;;;;;;;
-;; Syntax for DecisionEnglish
-;; 
-;; ??y IS ??x    - IS-A relationship
-;; ??y DOES ??x  - Action 
-;;
-;;
-;;
-;;
-;;
-;;
-;; Country A annexes land from Country B.
-;; What should it know? A is an object of type Country.
-;; annexes means the "annex" action
-;; land is an object
-;; objects can be owned
-;; B is an object of type Country
-;; annex operates on an object and (optionally) an original owner
-;;
-;; Annex is an example of a "take" action
-;;
-;; Possible action types:
-;; APPEAR, DISAPPEAR, TAKE, GIVE, HURT, HELP
-;;
-;; Statements should be separated by .
-;;
-
 ;;; Tokenizer
 
 (define (split line split-charset punc-charset)
@@ -46,17 +12,27 @@
 	  (cond 
 	   ((char-set-member? split-charset cur-char)
 	    (if (= (string-length buffer) 0)
-		(split-lp "" (substring rem-line 1 (string-length rem-line)) tokens)
-		(split-lp "" (substring rem-line 1 (string-length rem-line)) (append tokens (list (string-downcase buffer))))))
+		(split-lp "" (substring rem-line 1 
+					   (string-length rem-line)) tokens)
+		(split-lp "" (substring rem-line 1 
+					   (string-length rem-line)) 
+					 (append tokens (list (string-downcase buffer))))))
 	   ((char-set-member? punc-charset cur-char)
 	    (if (= (string-length buffer) 0)
-		(split-lp "" (substring rem-line 1 (string-length rem-line)) tokens)
-		(split-lp "" (substring rem-line 1 (string-length rem-line)) (append tokens (list (string-downcase buffer))))))
+		(split-lp "" (substring rem-line 1 
+					   (string-length rem-line)) tokens)
+		(split-lp "" (substring rem-line 1 
+					   (string-length rem-line)) 
+					 (append tokens (list (string-downcase buffer))))))
 	   (else
-	    (split-lp (string-append buffer (string cur-char)) (substring rem-line 1 (string-length rem-line)) tokens)))))))
+	    (split-lp (string-append buffer (string cur-char)) 
+				  (substring rem-line 1 
+				    (string-length rem-line)) tokens)))))))
 
 (define split-charset (char-set #\space))
-(define punc-charset (char-set #\! #\# #\$ #\% #\& #\( #\) #\* #\+ #\, #\- #\. #\/ #\: #\; #\< #\= #\> #\? #\@ #\[ #\\ #\] #\^ #\_ #\` #\{ #\| #\} #\~)) 
+(define punc-charset (char-set #\! #\# #\$ #\% #\& #\( #\) #\* #\+ #\, 
+							   #\- #\. #\/ #\: #\; #\< #\= #\> #\? #\@ 
+							   #\[ #\\ #\] #\^ #\_ #\` #\{ #\| #\} #\~)) 
 
 (define (tokenize filename)
   (let ((file (open-input-file filename)))
@@ -64,7 +40,9 @@
 		   (cur-line (read-line file)))
       (if (eof-object? cur-line)
 	  tokens-list
-	  (token-lp (append tokens-list (list (split cur-line split-charset punc-charset))) (read-line file))))))
+	  (token-lp (append tokens-list 
+				  (list (split cur-line split-charset punc-charset))) 
+				(read-line file))))))
 
 (define (tokenize-string string)
   (split string split-charset punc-charset))
@@ -76,7 +54,8 @@
                  (tokens (tokenize filename)))
     (if (= (length tokens) 0)
         k-list
-        (parse-lp (append k-list (list (parse:tokens (car tokens)))) (cdr tokens)))))
+        (parse-lp (append k-list 
+				    (list (parse:tokens (car tokens)))) (cdr tokens)))))
 
 (define (parse-string string)
   (parse:tokens (tokenize-string string)))
@@ -112,8 +91,13 @@
 	       (hash-table/get word-class-dictionary class '()))))
 
 (define (get-full-word-class class)
-  (let ((wlist (map car (hash-table/get word-class-dictionary class '()))))
-    (append (filter string? wlist) (append-map (lambda (subclass) (get-word-subclass class subclass)) (filter symbol? wlist)))))
+  (let ((wlist (map car 
+			     (hash-table/get word-class-dictionary class '()))))
+    (append (filter string? wlist) 
+			(append-map 
+			  (lambda (subclass) 
+					  (get-word-subclass class subclass)) 
+			  (filter symbol? wlist)))))
 
 (define (get-word-class-subclasses class)
   (filter symbol?
@@ -127,7 +111,9 @@
 	    (hash-table/get word-class-dictionary class '())))
        (let ((vcell (assoc word wlist)))
 	 (if vcell
-	     (hash-table/put! word-class-dictionary class (delete! vcell wlist))))))
+	     (hash-table/put! word-class-dictionary 
+						  class 
+						  (delete! vcell wlist))))))
    words)
   class)
 
@@ -146,7 +132,9 @@
 	 (hash-table/get word-class-dictionary class '())))
     (let ((vcell (assq subclass wlist)))
       (if vcell
-	  (hash-table/put! word-class-dictionary class (delete! vcell wlist)))))
+	  (hash-table/put! word-class-dictionary 
+					   class 
+					   (delete! vcell wlist)))))
   (list class subclass))
 
 (define (add-words-to-subclass! class subclass . words)
@@ -158,7 +146,8 @@
 	(append! wlist-sub words)
 	(begin
 	  (create-word-subclass! class subclass)
-	  (apply add-words-to-subclass! (cons class (cons subclass words))))))
+	  (apply add-words-to-subclass! 
+			 (cons class (cons subclass words))))))
   (list class subclass))
 
 (define (remove-word-from-subclass! class subclass word)
@@ -187,7 +176,11 @@
    (lambda (exit)
      (for-each 
       (lambda (word)
-	(let ((parsed ((match:->combinators (match-pattern word)) tokens '() (lambda (dict) dict))))
+	(let ((parsed 
+		     ((match:->combinators (match-pattern word)) tokens 
+														 '() 
+														 (lambda (dict) 
+														   dict))))
 	  (if parsed
 	      (exit (cons (list 'class-word word) parsed)))))
       word-class)
@@ -243,7 +236,8 @@
   (syn:single-match tokens '((?? object) "is" "type" (?? type))))
 
 (define (syn:is-a? tokens)
-  (let ((parsed (syn:single-match tokens '((?? object) "is" (?? property)))))
+  (let ((parsed (syn:single-match tokens 
+								  '((?? object) "is" (?? property)))))
     (if (and parsed
 	     (not (syn:is-type? tokens)))
 	(if (= (length (cadr (assq 'object parsed))) 0)
@@ -254,35 +248,51 @@
 (define (syn:article? tokens)
   (syn:floor-priority
    tokens
-   (syn:class-match tokens (get-full-word-class 'article) (lambda (word) `(,word (?? object))))))
+   (syn:class-match tokens 
+					(get-full-word-class 'article) 
+					(lambda (word) `(,word (?? object))))))
 
 (define (syn:if-then? tokens)
-  (syn:single-match tokens '("if" (?? predicate) "then" (?? consequent))))
+  (syn:single-match tokens 
+    '("if" (?? predicate) "then" (?? consequent))))
 
 (define (syn:take? tokens)
   (syn:medium-priority
    tokens
-   (syn:class-match tokens (get-word-subclass 'action 'take) (lambda (word) `((?? taker) ,word (?? object))))))
+   (syn:class-match tokens 
+					(get-word-subclass 'action 'take) 
+					(lambda (word) `((?? taker) ,word (?? object))))))
 
 (define (syn:take-from? tokens)
   (syn:medium-priority
    tokens
-   (syn:class-match tokens (get-word-subclass 'action 'take) (lambda (word) `((?? taker) ,word (?? object) "from" (?? takee))))))
+   (syn:class-match 
+     tokens 
+	 (get-word-subclass 'action 'take) 
+	 (lambda (word) 
+	   `((?? taker) ,word (?? object) "from" (?? takee))))))
 
 (define (syn:harm? tokens)
   (syn:medium-priority
    tokens
-   (syn:class-match tokens (get-word-subclass 'action 'harm) (lambda (word) `((?? aggressor) ,word (?? victim))))))
+   (syn:class-match 
+     tokens 
+	 (get-word-subclass 'action 'harm) 
+	 (lambda (word) `((?? aggressor) ,word (?? victim))))))
 
 (define (syn:generic-action? tokens)
   (syn:low-priority
    tokens
-   (syn:class-match tokens (get-full-word-class 'action) (lambda (word) `((?? actor) ,word (?? else))))))
+   (syn:class-match tokens 
+					(get-full-word-class 'action) 
+					(lambda (word) `((?? actor) ,word (?? else))))))
 
 (define (syn:path? tokens)
   (syn:medium-priority
    tokens
-   (syn:class-match tokens (get-full-word-class 'path) (lambda (word) `(,word (?? else))))))
+   (syn:class-match tokens 
+					(get-full-word-class 'path) 
+					(lambda (word) `(,word (?? else))))))
    
 (define (syn:what-is? tokens)
   (syn:high-priority
@@ -302,12 +312,16 @@
 (define (syn:when-is? tokens)
   (syn:high-priority
     tokens
-    (syn:class-match tokens (get-full-word-class 'when) (lambda (word) `("when" ,word (?? consequent))))))
+    (syn:class-match tokens 
+					 (get-full-word-class 'when) 
+					 (lambda (word) `("when" ,word (?? consequent))))))
     
 (define (syn:what-if? tokens)
   (syn:high-priority
     tokens
-    (syn:single-match tokens '("what" (?? construction) "if" (?? predicate)))))
+    (syn:single-match 
+      tokens 
+	  '("what" (?? construction) "if" (?? predicate)))))
 
 ;; handler for parsing language
 
@@ -455,7 +469,8 @@
 (add-words-to-class! 'action "jump" "jumps" "runs" "likes")
 
 (create-word-class! 'path)
-(add-words-to-class! 'path "over" "under" "through" "past" "by" "to" "above")
+(add-words-to-class! 'path "over" "under" "through" "past" "by" "to" 
+						   "above")
 
 (create-word-class! 'justification)
 (add-words-to-class! 'justification "justify" "justifies" "justified"

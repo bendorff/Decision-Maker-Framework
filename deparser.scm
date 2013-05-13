@@ -1,18 +1,15 @@
-; is type
-; is a
-; article
-; if-then
-; harm
-; generic action
-; path
+;;; Deparser
 
+; Example token sets needing to be deparsed:
+;
 ; (is-type ((object "america") (type "country")))
 ; (is-a ((object "america") (property "powerful")))
 ; ("america") ;; no articles
 ; (if-then ((predicate "a1") (consequent "a2")))
 ; (harms ((aggressor "america") (victim "britain")))
 ; (action ((action "runs") (actor "america") (else)))
-; (action ((action "jumps") (actor "dog") (else path ((path "over") (else "cat")))))
+; (action ((action "jumps") (actor "dog") 
+;							(else path ((path "over") (else "cat")))))
 
 (define (deparse:get-parsed-type parsed-tokens)
   (car parsed-tokens))
@@ -29,7 +26,6 @@
 	(equal? type (deparse:get-parsed-type tokens))
 	#f)))
 
-
 (define (deparse:spacify tokens)
   (if (= (length tokens) 1)
       tokens
@@ -40,14 +36,12 @@
 	    (lp (cdr rem-tok)
 		(append ret (list (car rem-tok)) '(" ")))))))
 
-
 (define deparse:tokens
   (make-generic-operator
    1
    'default
    (lambda (tokens)
      (apply string-append (deparse:spacify tokens)))))
-
 
 (defhandler deparse:tokens
   (lambda (tokens)
@@ -56,23 +50,26 @@
 
 (defhandler deparse:tokens
   (lambda (tokens)
-    (string-append (deparse:tokens (deparse:get-property 'object tokens))
-		   " is type "
-		   (deparse:tokens (deparse:get-property 'type tokens))
-		   "."))
+    (string-append 
+      (deparse:tokens (deparse:get-property 'object tokens))
+	  " is type "
+	  (deparse:tokens (deparse:get-property 'type tokens))
+	  "."))
   (deparse:is-type? 'is-type))
 
 (defhandler deparse:tokens
   (lambda (tokens)
-    (string-append (deparse:tokens (deparse:get-property 'object tokens))
-		   " is "
-		   (deparse:tokens (deparse:get-property 'property tokens))
-		   "."))
+    (string-append 
+      (deparse:tokens (deparse:get-property 'object tokens))
+	  " is "
+	  (deparse:tokens (deparse:get-property 'property tokens))
+	  "."))
   (deparse:is-type? 'is-a))
 
 (defhandler deparse:tokens
   (lambda (tokens)
-    (string-append "If "
+    (string-append 
+           "If "
 		   (deparse:tokens (deparse:get-property 'predicate tokens))
 		   ", then "
 		   (deparse:tokens (deparse:get-property 'consequent tokens))
@@ -81,28 +78,31 @@
 
 (defhandler deparse:tokens
   (lambda (tokens)
-    (string-append (deparse:tokens (deparse:get-property 'aggressor tokens))
-		   " harms "
-		   (deparse:tokens (deparse:get-property 'victim tokens))
-		    "."))
+    (string-append 
+      (deparse:tokens (deparse:get-property 'aggressor tokens))
+	  " harms "
+	  (deparse:tokens (deparse:get-property 'victim tokens))
+	  "."))
   (deparse:is-type? 'harms))
 
 (defhandler deparse:tokens
   (lambda (tokens)
-    (string-append (deparse:tokens (deparse:get-property 'taker tokens))
-		   " takes "
-		   (deparse:tokens (deparse:get-property 'object tokens))
-		    "."))
+    (string-append 
+      (deparse:tokens (deparse:get-property 'taker tokens))
+	  " takes "
+	  (deparse:tokens (deparse:get-property 'object tokens))
+	  "."))
   (deparse:is-type? 'take))
 
 (defhandler deparse:tokens
   (lambda (tokens)
-    (string-append (deparse:tokens (deparse:get-property 'taker tokens))
-		   " takes "
-		   (deparse:tokens (deparse:get-property 'object tokens))
-		   " from "
-		   (deparse:tokens (deparse:get-property 'takee tokens))
-		   "."))
+    (string-append 
+      (deparse:tokens (deparse:get-property 'taker tokens))
+	  " takes "
+	  (deparse:tokens (deparse:get-property 'object tokens))
+	  " from "
+	  (deparse:tokens (deparse:get-property 'takee tokens))
+	  "."))
   (deparse:is-type? 'take-from))
 
 (defhandler deparse:tokens
@@ -110,18 +110,22 @@
     (let ((tmpstring ""))
       (if (null? (deparse:get-property 'else tokens))
 	  (set! tmpstring ".")
-	  (set! tmpstring (string-append (deparse:get-property 'else tokens) ".")))
-      (string-append (deparse:tokens (deparse:get-property 'actor tokens))
-		     " "
-		     (deparse:tokens (deparse:get-property 'action tokens))
-		     tmpstring)))
+	  (set! tmpstring (string-append 
+					    (deparse:get-property 'else tokens) 
+					    ".")))
+      (string-append 
+        (deparse:tokens (deparse:get-property 'actor tokens))
+		" "
+		(deparse:tokens (deparse:get-property 'action tokens))
+		tmpstring)))
   (deparse:is-type? 'action))
 
 (defhandler deparse:tokens
   (lambda (tokens)
-    (string-append (deparse:tokens (deparse:get-property 'path tokens))
-		   " "
-		   (deparse:tokens (deparse:get-property 'else tokens))))
+    (string-append 
+      (deparse:tokens (deparse:get-property 'path tokens))
+	  " "
+	  (deparse:tokens (deparse:get-property 'else tokens))))
   (deparse:is-type? 'path))
   
 (defhandler deparse:tokens
@@ -200,7 +204,9 @@
   (map
    (lambda (new-kb-tokens)
      (deparse:kb new-kb-tokens))
-   (map (lambda (old-tokens) (cons (car kb-tokens) (list old-tokens))) kb-tokens)))
+   (map (lambda (old-tokens) 
+				(cons (car kb-tokens) (list old-tokens))) 
+		kb-tokens)))
 
 ;works
 (defhandler deparse:kb
@@ -311,10 +317,13 @@
     (let ((tmpstr ""))
       (if (not (assoc 'else (cdr kb-tokens)))
 	  (set! tmpstr ".")
-	  (set! tmpstr (string-append (cadr (assoc 'else (cadr kb-tokens))) ".")))
-      (string-append "It "
-		     (deparse:kb (cadr (assoc 'action (cadr kb-tokens))))
-		     tmpstr)))
+	  (set! tmpstr (string-append 
+				     (cadr (assoc 'else (cadr kb-tokens))) 
+				     ".")))
+      (string-append 
+        "It "
+		(deparse:kb (cadr (assoc 'action (cadr kb-tokens))))
+		tmpstr)))
   (deparse:kb-type? 'action))
 
 (defhandler deparse:kb
@@ -322,16 +331,12 @@
     (let ((tmpstr ""))
       (if (not (assoc 'else (cdr kb-tokens)))
 	  (set! tmpstr ".")
-	  (set! tmpstr (string-append " " (cadr (assoc 'else (cadr kb-tokens))) ".")))
-      (string-append (deparse:kb (cadr (assoc 'actor (cadr kb-tokens))))
-		     " does it"
-		     tmpstr)))
+	  (set! tmpstr (string-append 
+				     " " 
+				     (cadr (assoc 'else (cadr kb-tokens))) 
+				     ".")))
+      (string-append 
+        (deparse:kb (cadr (assoc 'actor (cadr kb-tokens))))
+		" does it"
+		tmpstr)))
   (deparse:kb-type? 'actor))
-
-;; takes
-;; takes-from
-;; loses-to
-;; harms
-;; harmed-by
-;; action
-;; actor

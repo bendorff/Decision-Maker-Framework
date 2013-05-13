@@ -1,3 +1,5 @@
+;;; Zimb, an example of a different use of th generic tokenizer-parser
+
 (define (syn:zimbg? tokens)
   (syn:single-match tokens '("groz" (? baz) (?? florg))))
 

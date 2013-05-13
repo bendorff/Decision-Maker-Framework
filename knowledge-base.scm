@@ -162,19 +162,19 @@
    ((know:is-type? 'action) parsed-tokens)
    ))
 
-(define (know:learn! parsed-tokens)
+(define (know:learn-tokens! parsed-tokens)
   (cond ((know:is-rule? parsed-tokens)
 	 (know:create-rule! parsed-tokens))
 	((know:is-fact? parsed-tokens)
 	 (know:create-fact! parsed-tokens))
 	((know:is-event? parsed-tokens)
 	 (know:create-specialized-event-knowledge! parsed-tokens))))
-
-(define (know:learn-string! string)
-  (know:learn! (parse-string string)))
+  
+(define (know:learn! string)
+  (know:learn-tokens! (parse-string string)))
 
 (define (know:learn-file! filename)
-  (for-each know:learn! (parse filename)))
+  (for-each know:learn-tokens! (parse filename)))
 
 (define (know:find-consequence predicate)
   (hash-table/get (know:retrieve-knowledge-base 'rules) predicate '()))

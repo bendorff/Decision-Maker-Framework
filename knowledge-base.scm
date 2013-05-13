@@ -242,9 +242,24 @@
    ((know:is-type? 'harms) parsed-tokens)
    ((know:is-type? 'action) parsed-tokens)
    ))
+   
+(define (know:is-query? parsed-tokens)
+  (or
+   ((know:is-type? 'what-is) parsed-tokens)
+   ((know:is-type? 'who-is) parsed-tokens)
+   ((know:is-type? 'who) parsed-tokens)
+   ((know:is-type? 'when-is) parsed-tokens)
+   ((know:is-type? 'what-if) parsed-tokens)
+   ))
 
 (define (know:learn-tokens! parsed-tokens)
-  (cond ((know:is-rule? parsed-tokens)
+  (cond
+    ((know:is-query? parsed-tokens)
+	 (pp (string-append 
+	       (deparse:tokens parsed-tokens) 
+	       " "
+		   (know:query parsed-tokens))))
+	((know:is-rule? parsed-tokens)
 	 (know:create-rule! parsed-tokens))
 	((know:is-fact? parsed-tokens)
 	 (know:create-fact! parsed-tokens))

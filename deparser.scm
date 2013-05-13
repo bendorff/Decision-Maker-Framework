@@ -123,6 +123,43 @@
 		   " "
 		   (deparse:tokens (deparse:get-property 'else tokens))))
   (deparse:is-type? 'path))
+  
+(defhandler deparse:tokens
+  (lambda (tokens)
+    (string-append "What is "
+		   (deparse:tokens (deparse:get-property 'object tokens))
+		   "?"))
+  (deparse:is-type? 'what-is))
+  
+(defhandler deparse:tokens
+  (lambda (tokens)
+    (string-append "Who is "
+		   (deparse:tokens (deparse:get-property 'property tokens))
+		   "?"))
+  (deparse:is-type? 'who-is))
+  
+(defhandler deparse:tokens
+  (lambda (tokens)
+    (string-append "Who "
+		   (deparse:tokens (deparse:get-property 'action tokens))
+		   "?"))
+  (deparse:is-type? 'who))
+  
+(defhandler deparse:tokens
+  (lambda (tokens)
+    (string-append "When "
+    	   (deparse:tokens (deparse:get-property 'when-is tokens))
+    	   " "
+		   (deparse:tokens (deparse:get-property 'consequent tokens))
+		   "?"))
+  (deparse:is-type? 'when-is))
+  
+(defhandler deparse:tokens
+  (lambda (tokens)
+    (string-append "What happens if "
+		   (deparse:tokens (deparse:get-property 'predicate tokens))
+		   "?"))
+  (deparse:is-type? 'what-if))
 
 (define (deparse:kb-get-parsed-type kb-tokens)
   (if (pair? (cadr kb-tokens))
@@ -147,8 +184,6 @@
 
 (defhandler deparse:kb
   (lambda (kb-tokens)
-    (pp kb-tokens)
-    (pp (caadar kb-tokens))
     (string-append "If "
 		   (deparse:tokens (caadar kb-tokens))
 		   "."))
@@ -196,6 +231,40 @@
     (string-append (deparse:kb (cadadr kb-tokens))
 		   " has this type."))
   (deparse:kb-type? 'is-a-type))
+  
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "It is "
+		   (deparse:kb (cadadr kb-tokens))
+		   "."))
+  (deparse:kb-type? 'what-is))
+  
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "It is "
+		   (deparse:kb (cadadr kb-tokens))
+		   "."))
+  (deparse:kb-type? 'who-is))
+  
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append (deparse:kb (cadadr kb-tokens))
+		   "does."))
+  (deparse:kb-type? 'who))
+  
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append "When "
+		   (deparse:kb (cadadr kb-tokens))
+		   "."))
+  (deparse:kb-type? 'when-is))
+  
+(defhandler deparse:kb
+  (lambda (kb-tokens)
+    (string-append 
+		   (deparse:kb (cadadr kb-tokens))
+		   "."))
+  (deparse:kb-type? 'what-if))
 
 (defhandler deparse:kb
   (lambda (kb-tokens)
@@ -253,9 +322,9 @@
     (let ((tmpstr ""))
       (if (not (assoc 'else (cdr kb-tokens)))
 	  (set! tmpstr ".")
-	  (set! tmpstr (string-append (cadr (assoc 'else (cadr kb-tokens))) ".")))
+	  (set! tmpstr (string-append " " (cadr (assoc 'else (cadr kb-tokens))) ".")))
       (string-append (deparse:kb (cadr (assoc 'actor (cadr kb-tokens))))
-		     " does it "
+		     " does it"
 		     tmpstr)))
   (deparse:kb-type? 'actor))
 

@@ -273,7 +273,7 @@
 (defhandler know:query 
   (lambda (parsed-query)
     (let ((actors (know:find-actors 
-				    (cadr (caadar (cdaadr parsed-query))))))
+				    (caar (cdaadr parsed-query)))))
       (if (null? actors) 
           (string-append "No one" (deparse:tokens (cdr parsed-query)) ".")
           (apply string-append (deparse:kb-multi actors))))) 

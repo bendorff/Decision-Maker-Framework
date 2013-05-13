@@ -426,9 +426,7 @@
 (defhandler parse:tokens
   (lambda (tokens)
     (let ((parsed (syn:who? tokens)))
-      `(WHO
-	,(list
-	  (parse:create-assoc 'action parsed)))))
+      `(WHO ,parsed)))
   syn:who?)
   
 (defhandler parse:tokens

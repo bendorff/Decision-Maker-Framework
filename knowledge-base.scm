@@ -321,7 +321,11 @@
   (let ((parsed-query (parse-string query)))
     (know:query parsed-query)))
   
-(define know:query (make-generic-operator 1))
+(define know:query 
+  (make-generic-operator 
+    1 
+    'error 
+	(lambda (parsed-tokens) (pp "Sorry, that is not question I recognize."))))
 	
 (define (query:what-is? parsed-query)
   (string=? "what-is" (string (car parsed-query)))) 
